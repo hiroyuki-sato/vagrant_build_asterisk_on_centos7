@@ -1,0 +1,67 @@
+- hosts: default
+  #become: true
+  tasks:
+    - name: EPEL
+      yum: name={{ item }}
+      become: true
+      with_items:
+        - "http://ftp.jaist.ac.jp/pub/Linux/Fedora/epel/7/x86_64/e/epel-release-7-5.noarch.rpm"
+
+    - name: yum
+      yum: name={{ item }}
+      become: true
+      with_items:
+        - "@development"
+        - "@additional-devel"
+        - "@base"
+        - gcc
+        - gcc-c++
+        - libxml2
+        - libxml2-devel
+        - openssl-devel
+        - ncurses-devel
+        - sqlite-devel
+        - newt-devel
+        - libuuid-devel
+        - uuid-devel
+        - json-c
+        - json-c-devel
+        - subversion
+        - unixODBC
+        - unixODBC-devel
+        - mysql-connector-odbc
+        - libtool-ltdl
+        - libtool-ltdl-devel
+        - SDL_image-devel
+        - bluez-libs-devel
+        - corosynclib-devel
+        - freetds-devel
+        - gmime-devel
+        - graphviz
+        - gsm-devel
+        - iksemel-devel
+        - ilbc-devel
+        - jack-audio-connection-kit-devel
+        - jansson-devel
+        - latex2html
+        - libedit-devel
+        - libogg-devel
+        - libsrtp-devel
+        - libvorbis-devel
+        - lua-devel
+        - mISDN-devel
+        - neon-devel
+        - pjproject-devel
+        - portaudio-devel
+        - radiusclient-ng-devel
+        - spandsp-devel
+        - speex-devel
+        - uw-imap-devel
+        - libusb-devel
+        - libsndfile-devel
+        - libsamplerate-devel
+
+    - name: copy build_asterisk
+      copy: src=build_asterisk
+            dest=/home/vagrant/build_asterisk
+            mode=0755

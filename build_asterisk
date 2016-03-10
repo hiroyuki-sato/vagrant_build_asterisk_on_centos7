@@ -1,0 +1,115 @@
+#!/bin/bash
+
+SRPMS="
+dahdi-tools-2.10.0-6.fc23.src.rpm
+libpri-1.4.13-6.fc23.src.rpm
+libresample-0.1.3-21.fc23.src.rpm
+libss7-1.0.2-9.fc23.src.rpm
+"
+# "asterisk-sounds-core-1.4.26-2.fc23.src.rpm"
+
+
+ASTERISK="asterisk-13.3.2-1.fc23.2.src.rpm"
+
+BASE="http://ftp.iij.ad.jp/pub/linux/fedora/releases/23/Everything/source/SRPMS"
+
+setup_rpm(){
+  cd $HOME
+
+  mkdir rpm
+  cd rpm 
+  mkdir BUILD  RPMS  SOURCES  SPECS  SRPMS
+
+  cd $HOME
+
+  echo "%_topdir $HOME/rpm" > $HOME/.rpmmacros
+}
+
+
+build_rpms(){
+  cd $HOME/rpm/SRPMS
+
+  for i in $SRPMS ; do 
+
+    c=$( echo $i | cut -c 1,1 )
+    url="${BASE}/${c}/${i}"
+  
+    if [ -f $i ] ; then 
+       /bin/rm -f $i 
+    fi
+    wget $url
+
+    rpmbuild --rebuild $i 
+    if [ $? -ne 0 ] ; then
+      echo "Build $i failed"
+      exit 1
+    fi
+
+    pkg_name=$( echo $i | awk -F- '{ print $1 }' )
+
+    ( cd ../RPMS/x86_64/ ; sudo rpm -ivh ${pkg_name}* )
+
+
+  done
+
+}
+
+setup_asterisk(){
+  cd ${HOME}/rpm/SRPMS
+
+  if [ -f "${ASTERISK}" ] ; then 
+    rm -f "${ASTERISK}"
+  fi
+
+  wget ${BASE}/a/${ASTERISK}
+
+  mkdir -p /tmp/asterisk 
+ 
+  ( cd /tmp/asterisk ; rpm2cpio $HOME/rpm/SRPMS/${ASTERISK} | cpio -id )
+
+  cp /tmp/asterisk/* ${HOME}/rpm/SOURCES
+  mv ${HOME}/rpm/SOURCES/asterisk.spec ${HOME}/rpm/SPECS
+
+  cd ${HOME}/rpm/SPECS
+  perl -i -pe 's/^(BuildRequires:\s+speexdsp-devel)/#$1/' asterisk.spec
+  
+
+}
+
+
+usage(){
+  command=$( basename $0 )
+  echo "Usage: $command {builddep|build}"
+  exit 1
+}
+
+build_asterisk(){
+  cd ${HOME}/rpm/SPECS
+  rpmbuild -bb asterisk.spec
+}
+
+if [ $# -ne 1 ] ; then 
+  usage
+fi
+
+if [ ! -d ${HOME}/rpm ] ; then 
+  setup_rpm  
+fi
+
+case $1 in
+  builddep)
+    build_rpms
+  ;;
+  setup)
+    setup_asterisk
+
+  ;;
+  build)
+    setup_asterisk
+    build_asterisk
+  ;;
+  *)
+    usage
+  ;;
+esac
+
